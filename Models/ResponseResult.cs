@@ -23,14 +23,32 @@ public class ResponseResult
     [JsonPropertyName("status")]
     public string? Status { get; set; }
 
+    [JsonPropertyName("previous_response_id")]
+    public string? PreviousResponseId { get; set; }
+
     [JsonPropertyName("parallel_tool_calls")]
     public bool? ParallelToolCalls { get; set; }
+
+    [JsonPropertyName("background")]
+    public bool? Background { get; set; }
 
     [JsonPropertyName("model")]
     public string Model { get; set; } = default!;
 
+    [JsonPropertyName("user")]
+    public string? User { get; set; }
+
+    [JsonPropertyName("safety_identifier")]
+    public string? SafetyIdentifier { get; set; }
+
     [JsonPropertyName("temperature")]
     public float? Temperature { get; set; }
+
+    [JsonPropertyName("top_p")]
+    public double? TopP { get; set; }
+
+    [JsonPropertyName("top_logprobs")]
+    public int? TopLogprobs { get; set; }
 
     [JsonPropertyName("output")]
     public IEnumerable<object> Output { get; set; } = [];
@@ -58,8 +76,29 @@ public class ResponseResult
     [JsonPropertyName("reasoning")]
     public object? Reasoning { get; set; }
 
+    [JsonPropertyName("instructions")]
+    public string? Instructions { get; set; }
+
+    [JsonPropertyName("prompt")]
+    public object? Prompt { get; set; }
+
+    [JsonPropertyName("prompt_cache_key")]
+    public string? PromptCacheKey { get; set; }
+
+    [JsonPropertyName("prompt_cache_retention")]
+    public string? PromptCacheRetention { get; set; }
+
     [JsonPropertyName("store")]
     public bool? Store { get; set; }
+
+    [JsonPropertyName("max_tool_calls")]
+    public int? MaxToolCalls { get; set; }
+
+    [JsonPropertyName("truncation")]
+    public string? Truncation { get; set; }
+
+    [JsonPropertyName("access_programs")]
+    public JsonElement? AccessPrograms { get; set; }
 
     [JsonPropertyName("max_output_tokens")]
     public int? MaxOutputTokens { get; set; }
@@ -69,6 +108,24 @@ public class ResponseResult
 
     [JsonPropertyName("output_text")]
     public string? OutputText { get; set; }
+
+    [JsonPropertyName("incomplete_details")]
+    public JsonElement? IncompleteDetails { get; set; }
+
+    [JsonPropertyName("tool_usage")]
+    public JsonElement? ToolUsage { get; set; }
+
+    [JsonPropertyName("prompt_cache_options")]
+    public JsonElement? PromptCacheOptions { get; set; }
+
+    [JsonPropertyName("prompt_cache_diagnostics")]
+    public JsonElement? PromptCacheDiagnostics { get; set; }
+
+    [JsonPropertyName("moderation")]
+    public JsonElement? Moderation { get; set; }
+
+    [JsonPropertyName("conversation")]
+    public JsonElement? Conversation { get; set; }
 
     [JsonPropertyName("error")]
     public ResponseResultError? Error { get; set; }

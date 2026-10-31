@@ -32,6 +32,9 @@ public sealed class ResponseFunctionCallItem : ResponseInputItem
     [JsonPropertyName("status")]
     public string? Status { get; set; }
 
+    [JsonPropertyName("async")]
+    public bool? Async { get; set; }
+
     [JsonPropertyName("caller")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public ResponseCaller? Caller { get; set; }
@@ -67,7 +70,10 @@ public sealed class ResponseCaller
     public string Type { get; set; } = default!;
 
     [JsonPropertyName("caller_id")]
-    public string CallerId { get; set; } = default!;
+    public string? CallerId { get; set; }
+
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
 }
 
 /// <summary>
@@ -119,6 +125,7 @@ public sealed class ResponseProgramOutputItem : ResponseInputItem
 /// <summary>
 /// Input item for a prior tool/function call output in the /v1/responses conversation graph.
 /// </summary>
+[JsonConverter(typeof(ResponseFunctionCallOutputItemJsonConverter))]
 public sealed class ResponseFunctionCallOutputItem : ResponseInputItem
 {
     public ResponseFunctionCallOutputItem()
@@ -130,10 +137,16 @@ public sealed class ResponseFunctionCallOutputItem : ResponseInputItem
     public string? Id { get; set; }
 
     [JsonPropertyName("call_id")]
-    public string CallId { get; set; } = default!;
+    public string? CallId { get; set; }
 
     [JsonPropertyName("output")]
     public string Output { get; set; } = "{}";
+
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
+    [JsonPropertyName("namespace")]
+    public string? Namespace { get; set; }
 
     [JsonPropertyName("status")]
     public string? Status { get; set; }
@@ -141,6 +154,9 @@ public sealed class ResponseFunctionCallOutputItem : ResponseInputItem
     [JsonPropertyName("caller")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public ResponseCaller? Caller { get; set; }
+
+    [JsonIgnore]
+    public JsonElement? StructuredOutput { get; set; }
 }
 
 /// <summary>
@@ -166,9 +182,6 @@ public sealed class ResponseReasoningItem : ResponseInputItem
     [JsonPropertyName("agent")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public ResponseAgent? Agent { get; set; }
-
-    [JsonExtensionData]
-    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
 
    /* [JsonPropertyName("signature")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

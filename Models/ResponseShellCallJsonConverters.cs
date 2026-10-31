@@ -22,7 +22,8 @@ public sealed class ResponseShellCallEnvironmentJsonConverter : JsonConverter<Re
                 ?? throw new JsonException("Could not deserialize local shell environment."),
             "container_reference" => root.Deserialize<ResponseShellContainerReferenceEnvironment>(options)
                 ?? throw new JsonException("Could not deserialize shell container reference."),
-            _ => throw new JsonException($"Unknown shell_call environment type: '{type ?? "(missing)"}'.")
+            not null => CreateUnknownShellEnvironment(root, type),
+            _ => throw new JsonException("Shell environment is missing required string 'type'.")
         };
     }
 
@@ -31,6 +32,17 @@ public sealed class ResponseShellCallEnvironmentJsonConverter : JsonConverter<Re
         ResponseShellCallEnvironment value,
         JsonSerializerOptions options)
         => JsonSerializer.Serialize(writer, (object)value, value.GetType(), options);
+
+    private static ResponseUnknownShellCallEnvironment CreateUnknownShellEnvironment(
+        JsonElement root,
+        string type)
+        => new()
+        {
+            Discriminator = type,
+            AdditionalProperties = root.EnumerateObject()
+                .Where(property => property.Name != "type")
+                .ToDictionary(property => property.Name, property => property.Value.Clone(), StringComparer.Ordinal)
+        };
 }
 
 public sealed class ResponseShellOutcomeJsonConverter : JsonConverter<ResponseShellOutcome>
@@ -52,7 +64,8 @@ public sealed class ResponseShellOutcomeJsonConverter : JsonConverter<ResponseSh
                 ?? throw new JsonException("Could not deserialize shell exit outcome."),
             "timeout" => root.Deserialize<ResponseShellTimeoutOutcome>(options)
                 ?? throw new JsonException("Could not deserialize shell timeout outcome."),
-            _ => throw new JsonException($"Unknown shell outcome type: '{type ?? "(missing)"}'.")
+            not null => CreateUnknownShellOutcome(root, type),
+            _ => throw new JsonException("Shell outcome is missing required string 'type'.")
         };
     }
 
@@ -61,4 +74,13 @@ public sealed class ResponseShellOutcomeJsonConverter : JsonConverter<ResponseSh
         ResponseShellOutcome value,
         JsonSerializerOptions options)
         => JsonSerializer.Serialize(writer, (object)value, value.GetType(), options);
+
+    private static ResponseUnknownShellOutcome CreateUnknownShellOutcome(JsonElement root, string type)
+        => new()
+        {
+            Discriminator = type,
+            AdditionalProperties = root.EnumerateObject()
+                .Where(property => property.Name != "type")
+                .ToDictionary(property => property.Name, property => property.Value.Clone(), StringComparer.Ordinal)
+        };
 }

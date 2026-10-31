@@ -21,4 +21,11 @@ public sealed class InputFilePart : ResponseContentPart
 
     [JsonPropertyName("filename")]
     public string? Filename { get; set; }
+
+    [JsonPropertyName("detail")]
+    public string? Detail { get; set; }
+
+    [JsonPropertyName("prompt_cache_breakpoint")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public object? PromptCacheBreakpoint { get; set; }
 }

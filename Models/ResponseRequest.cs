@@ -13,9 +13,6 @@ public sealed class ResponseRequest
     [JsonPropertyName("instructions")]
     public string? Instructions { get; set; }
 
-    /// <summary>
-    /// ✅ input: string OR array
-    /// </summary>
     [JsonPropertyName("input")]
     public ResponseInput? Input { get; set; }
 
@@ -42,6 +39,24 @@ public sealed class ResponseRequest
 
     [JsonPropertyName("store")]
     public bool? Store { get; set; }
+
+    [JsonPropertyName("previous_response_id")]
+    public string? PreviousResponseId { get; set; }
+
+    [JsonPropertyName("user")]
+    public string? User { get; set; }
+
+    [JsonPropertyName("safety_identifier")]
+    public string? SafetyIdentifier { get; set; }
+
+    [JsonPropertyName("prompt_cache_retention")]
+    public string? PromptCacheRetention { get; set; }
+
+    [JsonPropertyName("max_tool_calls")]
+    public int? MaxToolCalls { get; set; }
+
+    [JsonPropertyName("prompt")]
+    public object? Prompt { get; set; }
 
     [JsonPropertyName("service_tier")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -96,6 +111,17 @@ public sealed class ResponseRequest
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public object? PromptCacheOptions { get; set; }
 
+    [JsonPropertyName("stream_options")]
+    public object? StreamOptions { get; set; }
+
+    [JsonPropertyName("moderation")]
+    public object? Moderation { get; set; }
+
+    [JsonPropertyName("conversation")]
+    public object? Conversation { get; set; }
+
+    [JsonPropertyName("access_programs")]
+    public object? AccessPrograms { get; set; }
 }
 
 public sealed class Reasoning
@@ -110,13 +136,11 @@ public sealed class Reasoning
 }
 
 
-[JsonConverter(typeof(JsonStringEnumConverter))]
+[JsonConverter(typeof(TruncationStrategyJsonConverter))]
 public enum TruncationStrategy
 {
-    [JsonPropertyName("auto")]
     Auto,
 
-    [JsonPropertyName("disabled")]
     Disabled
 }
 
@@ -137,10 +161,20 @@ public abstract class ResponseInputItem
 {
     [JsonPropertyName("type")]
     public string? Type { get; set; }
+
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
+}
+
+/// <summary>
+/// Preserves input item variants introduced by the API without losing their JSON.
+/// </summary>
+public sealed class ResponseUnknownInputItem : ResponseInputItem
+{
 }
 
 
-[JsonConverter(typeof(JsonStringEnumConverter))]
+[JsonConverter(typeof(ResponseRoleJsonConverter))]
 public enum ResponseRole
 {
     [EnumMember(Value = "user")]
@@ -162,6 +196,16 @@ public abstract class ResponseContentPart
 {
     [JsonPropertyName("type")]
     public string Type { get; set; } = default!;
+
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
+}
+
+/// <summary>
+/// Preserves content part variants introduced by the API without losing their JSON.
+/// </summary>
+public sealed class ResponseUnknownContentPart : ResponseContentPart
+{
 }
 
 public sealed class InputTextPart : ResponseContentPart
@@ -178,6 +222,10 @@ public sealed class InputTextPart : ResponseContentPart
 
     [JsonPropertyName("text")]
     public string Text { get; set; } = "";
+
+    [JsonPropertyName("prompt_cache_breakpoint")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public object? PromptCacheBreakpoint { get; set; }
 }
 
 public sealed class OutputTextPart : ResponseContentPart
@@ -197,6 +245,21 @@ public sealed class OutputTextPart : ResponseContentPart
 
     [JsonPropertyName("annotations")]
     public object[] Annotations { get; set; } = [];
+
+    [JsonPropertyName("logprobs")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public JsonElement[]? Logprobs { get; set; }
+}
+
+public sealed class RefusalContentPart : ResponseContentPart
+{
+    public RefusalContentPart()
+    {
+        Type = "refusal";
+    }
+
+    [JsonPropertyName("refusal")]
+    public string Refusal { get; set; } = "";
 }
 
 public sealed class InputImagePart : ResponseContentPart
@@ -220,6 +283,10 @@ public sealed class InputImagePart : ResponseContentPart
     /// </summary>
     [JsonPropertyName("image_url")]
     public string? ImageUrl { get; set; }
+
+    [JsonPropertyName("prompt_cache_breakpoint")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public object? PromptCacheBreakpoint { get; set; }
 }
 
 #endregion
