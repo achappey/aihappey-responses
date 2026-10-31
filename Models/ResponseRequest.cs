@@ -17,7 +17,7 @@ public sealed class ResponseRequest
     public ResponseInput? Input { get; set; }
 
     [JsonPropertyName("temperature")]
-    public float? Temperature { get; set; }
+    public double? Temperature { get; set; }
 
     [JsonPropertyName("top_p")]
     public double? TopP { get; set; } // ✅ number
