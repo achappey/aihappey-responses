@@ -86,6 +86,72 @@ public abstract class ResponseStreamIndexedPart : ResponseStreamPart
     public int SequenceNumber { get; init; }
 }
 
+public sealed class ResponseQueuedEvent : ResponseStreamPart
+{
+    [JsonPropertyName("sequence_number")]
+    public int SequenceNumber { get; init; }
+
+    [JsonPropertyName("response")]
+    public ResponseResult Response { get; init; } = default!;
+
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.queued";
+}
+
+public sealed class ResponseIncompleteEvent : ResponseStreamPart
+{
+    [JsonPropertyName("sequence_number")]
+    public int SequenceNumber { get; init; }
+
+    [JsonPropertyName("response")]
+    public ResponseResult Response { get; init; } = default!;
+
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.incomplete";
+}
+
+public sealed class ResponseAudioDeltaEvent : ResponseStreamPart
+{
+    [JsonPropertyName("sequence_number")]
+    public int SequenceNumber { get; init; }
+
+    [JsonPropertyName("delta")]
+    public string Delta { get; init; } = default!;
+
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.audio.delta";
+}
+
+public sealed class ResponseAudioDoneEvent : ResponseStreamPart
+{
+    [JsonPropertyName("sequence_number")]
+    public int SequenceNumber { get; init; }
+
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.audio.done";
+}
+
+public sealed class ResponseAudioTranscriptDeltaEvent : ResponseStreamPart
+{
+    [JsonPropertyName("sequence_number")]
+    public int SequenceNumber { get; init; }
+
+    [JsonPropertyName("delta")]
+    public string Delta { get; init; } = default!;
+
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.audio.transcript.delta";
+}
+
+public sealed class ResponseAudioTranscriptDoneEvent : ResponseStreamPart
+{
+    [JsonPropertyName("sequence_number")]
+    public int SequenceNumber { get; init; }
+
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.audio.transcript.done";
+}
+
 public abstract class ResponseStreamItemEvent : ResponseStreamIndexedPart
 {
     [JsonPropertyName("item")]
@@ -451,6 +517,10 @@ public sealed class ResponseUnknownEvent : ResponseStreamPart
     [JsonPropertyName("type")]
     public override string Type { get; init; } = default!;
 
-    [JsonExtensionData]
-    public Dictionary<string, JsonElement>? Data { get; init; }
+    [JsonIgnore]
+    public Dictionary<string, JsonElement>? Data
+    {
+        get => AdditionalProperties;
+        init => AdditionalProperties = value;
+    }
 }

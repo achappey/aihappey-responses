@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace AIHappey.Responses;
@@ -57,6 +58,9 @@ public abstract class ResponseShellCallEnvironment
 {
     [JsonPropertyName("type")]
     public abstract string Type { get; }
+
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
 }
 
 public sealed class ResponseShellLocalEnvironment : ResponseShellCallEnvironment
@@ -72,6 +76,15 @@ public sealed class ResponseShellContainerReferenceEnvironment : ResponseShellCa
 
     [JsonPropertyName("container_id")]
     public string ContainerId { get; set; } = default!;
+}
+
+public sealed class ResponseUnknownShellCallEnvironment : ResponseShellCallEnvironment
+{
+    [JsonIgnore]
+    public string Discriminator { get; set; } = default!;
+
+    [JsonPropertyName("type")]
+    public override string Type => Discriminator;
 }
 
 /// <summary>
@@ -129,6 +142,9 @@ public abstract class ResponseShellOutcome
 {
     [JsonPropertyName("type")]
     public abstract string Type { get; }
+
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
 }
 
 public sealed class ResponseShellExitOutcome : ResponseShellOutcome
@@ -144,4 +160,13 @@ public sealed class ResponseShellTimeoutOutcome : ResponseShellOutcome
 {
     [JsonPropertyName("type")]
     public override string Type => "timeout";
+}
+
+public sealed class ResponseUnknownShellOutcome : ResponseShellOutcome
+{
+    [JsonIgnore]
+    public string Discriminator { get; set; } = default!;
+
+    [JsonPropertyName("type")]
+    public override string Type => Discriminator;
 }

@@ -36,6 +36,12 @@ public sealed class ResponseInputItemJsonConverter : JsonConverter<ResponseInput
                    ?? throw new JsonException("Could not deserialize function_call.");
         }
 
+        if (string.Equals(type, "image_generation_call", StringComparison.OrdinalIgnoreCase))
+        {
+            return root.Deserialize<ResponseImageGenerationCallItem>(options)
+                   ?? throw new JsonException("Could not deserialize image_generation_call.");
+        }
+
         if (string.Equals(type, "function_call_output", StringComparison.OrdinalIgnoreCase))
         {
             return root.Deserialize<ResponseFunctionCallOutputItem>(options)
@@ -126,7 +132,13 @@ public sealed class ResponseInputItemJsonConverter : JsonConverter<ResponseInput
                    ?? throw new JsonException("Could not deserialize compaction.");
         }
 
-        throw new JsonException($"Unknown input item type: '{type ?? "(missing)"}'");
+        if (!string.IsNullOrWhiteSpace(type))
+        {
+            return root.Deserialize<ResponseUnknownInputItem>(options)
+                   ?? throw new JsonException($"Could not preserve unknown input item type '{type}'.");
+        }
+
+        throw new JsonException("Input item is missing required string 'type'.");
     }
 
     public override void Write(Utf8JsonWriter writer, ResponseInputItem value, JsonSerializerOptions options)
@@ -143,6 +155,10 @@ public sealed class ResponseInputItemJsonConverter : JsonConverter<ResponseInput
 
             case ResponseFunctionCallItem functionCall:
                 JsonSerializer.Serialize(writer, functionCall, options);
+                return;
+
+            case ResponseImageGenerationCallItem imageGenerationCall:
+                JsonSerializer.Serialize(writer, imageGenerationCall, options);
                 return;
 
             case ResponseFunctionCallOutputItem functionCallOutput:
@@ -203,6 +219,10 @@ public sealed class ResponseInputItemJsonConverter : JsonConverter<ResponseInput
 
             case ResponseCompactionItem compaction:
                 JsonSerializer.Serialize(writer, compaction, options);
+                return;
+
+            case ResponseUnknownInputItem unknown:
+                JsonSerializer.Serialize(writer, unknown, options);
                 return;
 
             default:

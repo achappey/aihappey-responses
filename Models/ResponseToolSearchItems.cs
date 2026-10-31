@@ -28,8 +28,6 @@ public sealed class ResponseToolSearchCallItem : ResponseInputItem
     [JsonPropertyName("arguments")]
     public JsonElement Arguments { get; set; } = JsonSerializer.SerializeToElement(new { });
 
-    [JsonExtensionData]
-    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
 }
 
 /// <summary>
@@ -56,8 +54,6 @@ public sealed class ResponseToolSearchOutputItem : ResponseInputItem
     [JsonPropertyName("tools")]
     public List<ResponseToolDefinition> Tools { get; set; } = [];
 
-    [JsonExtensionData]
-    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
 }
 
 /// <summary>
@@ -73,6 +69,4 @@ public sealed class ResponseAdditionalToolsItem : ResponseInputItem
     [JsonPropertyName("tools")]
     public List<ResponseToolDefinition> Tools { get; set; } = [];
 
-    [JsonExtensionData]
-    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
 }

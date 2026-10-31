@@ -23,11 +23,14 @@ public sealed class ResponseContentPartJsonConverter : JsonConverter<ResponseCon
                           ?? throw new JsonException("Failed to deserialize input_text."),
             "output_text" => root.Deserialize<OutputTextPart>(options)
                           ?? throw new JsonException("Failed to deserialize output_text."),
+            "refusal" => root.Deserialize<RefusalContentPart>(options)
+                         ?? throw new JsonException("Failed to deserialize refusal."),
             "input_image" => root.Deserialize<InputImagePart>(options)
                           ?? throw new JsonException("Failed to deserialize input_image."),
             "input_file" => root.Deserialize<InputFilePart>(options)
                           ?? throw new JsonException("Failed to deserialize input_file."),
-            _ => throw new JsonException($"Unknown content part type: '{type}'")
+            _ => root.Deserialize<ResponseUnknownContentPart>(options)
+                 ?? throw new JsonException($"Could not preserve content part type '{type}'.")
         };
     }
 
@@ -41,11 +44,17 @@ public sealed class ResponseContentPartJsonConverter : JsonConverter<ResponseCon
             case OutputTextPart t:
                 JsonSerializer.Serialize(writer, t, options);
                 return;
+            case RefusalContentPart refusal:
+                JsonSerializer.Serialize(writer, refusal, options);
+                return;
             case InputImagePart i:
                 JsonSerializer.Serialize(writer, i, options);
                 return;
             case InputFilePart f:
                 JsonSerializer.Serialize(writer, f, options);
+                return;
+            case ResponseUnknownContentPart unknown:
+                JsonSerializer.Serialize(writer, unknown, options);
                 return;
             default:
                 throw new JsonException($"Unsupported content part: {value.GetType().Name}");
