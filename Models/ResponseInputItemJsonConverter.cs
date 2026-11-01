@@ -54,6 +54,84 @@ public sealed class ResponseInputItemJsonConverter : JsonConverter<ResponseInput
                    ?? throw new JsonException("Could not deserialize web_search_call.");
         }
 
+        if (string.Equals(type, "file_search_call", StringComparison.OrdinalIgnoreCase))
+        {
+            return root.Deserialize<ResponseFileSearchCallItem>(options)
+                   ?? throw new JsonException("Could not deserialize file_search_call.");
+        }
+
+        if (string.Equals(type, "computer_call", StringComparison.OrdinalIgnoreCase))
+        {
+            return root.Deserialize<ResponseComputerCallItem>(options)
+                   ?? throw new JsonException("Could not deserialize computer_call.");
+        }
+
+        if (string.Equals(type, "computer_call_output", StringComparison.OrdinalIgnoreCase))
+        {
+            return root.Deserialize<ResponseComputerCallOutputItem>(options)
+                   ?? throw new JsonException("Could not deserialize computer_call_output.");
+        }
+
+        if (string.Equals(type, "configuration_update", StringComparison.OrdinalIgnoreCase))
+        {
+            return root.Deserialize<ResponseConfigurationUpdateItem>(options)
+                   ?? throw new JsonException("Could not deserialize configuration_update.");
+        }
+
+        if (string.Equals(type, "mcp_call", StringComparison.OrdinalIgnoreCase))
+        {
+            return root.Deserialize<ResponseMcpCallItem>(options)
+                   ?? throw new JsonException("Could not deserialize mcp_call.");
+        }
+
+        if (string.Equals(type, "mcp_list_tools", StringComparison.OrdinalIgnoreCase))
+        {
+            return root.Deserialize<ResponseMcpListToolsItem>(options)
+                   ?? throw new JsonException("Could not deserialize mcp_list_tools.");
+        }
+
+        if (string.Equals(type, "mcp_approval_request", StringComparison.OrdinalIgnoreCase))
+        {
+            return root.Deserialize<ResponseMcpApprovalRequestItem>(options)
+                   ?? throw new JsonException("Could not deserialize mcp_approval_request.");
+        }
+
+        if (string.Equals(type, "mcp_approval_response", StringComparison.OrdinalIgnoreCase))
+        {
+            return root.Deserialize<ResponseMcpApprovalResponseItem>(options)
+                   ?? throw new JsonException("Could not deserialize mcp_approval_response.");
+        }
+
+        if (string.Equals(type, "custom_tool_call", StringComparison.OrdinalIgnoreCase))
+        {
+            return root.Deserialize<ResponseCustomToolCallItem>(options)
+                   ?? throw new JsonException("Could not deserialize custom_tool_call.");
+        }
+
+        if (string.Equals(type, "custom_tool_call_output", StringComparison.OrdinalIgnoreCase))
+        {
+            return root.Deserialize<ResponseCustomToolCallOutputItem>(options)
+                   ?? throw new JsonException("Could not deserialize custom_tool_call_output.");
+        }
+
+        if (string.Equals(type, "local_shell_call", StringComparison.OrdinalIgnoreCase))
+        {
+            return root.Deserialize<ResponseLocalShellCallItem>(options)
+                   ?? throw new JsonException("Could not deserialize local_shell_call.");
+        }
+
+        if (string.Equals(type, "local_shell_call_output", StringComparison.OrdinalIgnoreCase))
+        {
+            return root.Deserialize<ResponseLocalShellCallOutputItem>(options)
+                   ?? throw new JsonException("Could not deserialize local_shell_call_output.");
+        }
+
+        if (string.Equals(type, "compaction_trigger", StringComparison.OrdinalIgnoreCase))
+        {
+            return root.Deserialize<ResponseCompactionTriggerItem>(options)
+                   ?? throw new JsonException("Could not deserialize compaction_trigger.");
+        }
+
         if (string.Equals(type, "tool_search_call", StringComparison.OrdinalIgnoreCase))
         {
             return root.Deserialize<ResponseToolSearchCallItem>(options)
@@ -179,6 +257,58 @@ public sealed class ResponseInputItemJsonConverter : JsonConverter<ResponseInput
 
             case ResponseWebSearchCallItem webSearchCall:
                 JsonSerializer.Serialize(writer, webSearchCall, options);
+                return;
+
+            case ResponseFileSearchCallItem fileSearchCall:
+                JsonSerializer.Serialize(writer, fileSearchCall, options);
+                return;
+
+            case ResponseComputerCallItem computerCall:
+                JsonSerializer.Serialize(writer, computerCall, options);
+                return;
+
+            case ResponseComputerCallOutputItem computerCallOutput:
+                JsonSerializer.Serialize(writer, computerCallOutput, options);
+                return;
+
+            case ResponseConfigurationUpdateItem configurationUpdate:
+                JsonSerializer.Serialize(writer, configurationUpdate, options);
+                return;
+
+            case ResponseMcpCallItem mcpCall:
+                JsonSerializer.Serialize(writer, mcpCall, options);
+                return;
+
+            case ResponseMcpListToolsItem mcpListTools:
+                JsonSerializer.Serialize(writer, mcpListTools, options);
+                return;
+
+            case ResponseMcpApprovalRequestItem mcpApprovalRequest:
+                JsonSerializer.Serialize(writer, mcpApprovalRequest, options);
+                return;
+
+            case ResponseMcpApprovalResponseItem mcpApprovalResponse:
+                JsonSerializer.Serialize(writer, mcpApprovalResponse, options);
+                return;
+
+            case ResponseCustomToolCallItem customToolCall:
+                JsonSerializer.Serialize(writer, customToolCall, options);
+                return;
+
+            case ResponseCustomToolCallOutputItem customToolCallOutput:
+                JsonSerializer.Serialize(writer, customToolCallOutput, options);
+                return;
+
+            case ResponseLocalShellCallItem localShellCall:
+                JsonSerializer.Serialize(writer, localShellCall, options);
+                return;
+
+            case ResponseLocalShellCallOutputItem localShellCallOutput:
+                JsonSerializer.Serialize(writer, localShellCallOutput, options);
+                return;
+
+            case ResponseCompactionTriggerItem compactionTrigger:
+                JsonSerializer.Serialize(writer, compactionTrigger, options);
                 return;
 
             case ResponseToolSearchCallItem toolSearchCall:

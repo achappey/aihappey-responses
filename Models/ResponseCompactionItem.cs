@@ -18,4 +18,8 @@ public sealed class ResponseCompactionItem : ResponseInputItem
 
     [JsonPropertyName("encrypted_content")]
     public string EncryptedContent { get; set; } = default!;
+
+    [JsonPropertyName("created_by")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? CreatedBy { get; set; }
 }

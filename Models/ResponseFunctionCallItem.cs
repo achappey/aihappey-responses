@@ -179,13 +179,17 @@ public sealed class ResponseReasoningItem : ResponseInputItem
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? EncryptedContent { get; set; }
 
+    [JsonPropertyName("content")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public JsonElement? Content { get; set; }
+
+    [JsonPropertyName("status")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Status { get; set; }
+
     [JsonPropertyName("agent")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public ResponseAgent? Agent { get; set; }
-
-   /* [JsonPropertyName("signature")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? Signature { get; set; }*/
 }
 
 public sealed class ResponseReasoningSummaryTextPart

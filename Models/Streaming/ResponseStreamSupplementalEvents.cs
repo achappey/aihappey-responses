@@ -406,6 +406,17 @@ public sealed class ResponseCodeInterpreterCallInProgress : ResponseToolCallStat
     public override string Type { get; init; } = "response.code_interpreter_call.in_progress";
 }
 
+public sealed class ResponseCodeInterpreterCallInterpreting : ResponseToolCallStatusEvent
+{
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.code_interpreter_call.interpreting";
+}
+
+public sealed class ResponseCodeInterpreterCallCompleted : ResponseToolCallStatusEvent
+{
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.code_interpreter_call.completed";
+}
 
 public sealed class ResponseCodeInterpreterCallDone : ResponseToolCallStatusEvent
 {
@@ -448,6 +459,9 @@ public sealed class ResponseCustomToolCallInputDone : ResponseToolCallStatusEven
 
 public abstract class ResponseShellCallCommandEvent : ResponseStreamIndexedPart
 {
+    [JsonPropertyName("item_id")]
+    public string ItemId { get; init; } = default!;
+
     [JsonPropertyName("command_index")]
     public int CommandIndex { get; init; }
 }
@@ -513,6 +527,66 @@ public sealed class ResponseWebSearchCallSearching : ResponseToolCallStatusEvent
 {
     [JsonPropertyName("type")]
     public override string Type { get; init; } = "response.web_search_call.searching";
+}
+
+public sealed class ResponseMcpCallCompleted : ResponseToolCallStatusEvent
+{
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.mcp_call.completed";
+}
+
+public sealed class ResponseMcpCallFailed : ResponseToolCallStatusEvent
+{
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.mcp_call.failed";
+}
+
+public sealed class ResponseMcpCallInProgress : ResponseToolCallStatusEvent
+{
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.mcp_call.in_progress";
+}
+
+public sealed class ResponseMcpListToolsCompleted : ResponseToolCallStatusEvent
+{
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.mcp_list_tools.completed";
+}
+
+public sealed class ResponseMcpListToolsFailed : ResponseToolCallStatusEvent
+{
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.mcp_list_tools.failed";
+}
+
+public sealed class ResponseMcpListToolsInProgress : ResponseToolCallStatusEvent
+{
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.mcp_list_tools.in_progress";
+}
+
+public sealed class ResponseCompactionCompacting : ResponseToolCallStatusEvent
+{
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.compaction.compacting";
+}
+
+public sealed class ResponseShellCallOutputContentDelta : ResponseShellCallCommandEvent
+{
+    [JsonPropertyName("delta")]
+    public JsonElement? Delta { get; init; }
+
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.shell_call_output_content.delta";
+}
+
+public sealed class ResponseShellCallOutputContentDone : ResponseShellCallCommandEvent
+{
+    [JsonPropertyName("output")]
+    public JsonElement? Output { get; init; }
+
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.shell_call_output_content.done";
 }
 
 public sealed class ResponseUnknownEvent : ResponseStreamPart

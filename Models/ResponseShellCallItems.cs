@@ -51,6 +51,9 @@ public sealed class ResponseShellCallAction
     [JsonPropertyName("max_output_length")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public int? MaxOutputLength { get; set; }
+
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
 }
 
 [JsonConverter(typeof(ResponseShellCallEnvironmentJsonConverter))]
@@ -135,6 +138,9 @@ public sealed class ResponseShellCallOutputChunk
     [JsonPropertyName("outcome")]
     [JsonConverter(typeof(ResponseShellOutcomeJsonConverter))]
     public ResponseShellOutcome Outcome { get; set; } = new ResponseShellExitOutcome();
+
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
 }
 
 [JsonConverter(typeof(ResponseShellOutcomeJsonConverter))]

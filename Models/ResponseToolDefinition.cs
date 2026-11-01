@@ -5,8 +5,8 @@ using System.Text.Json.Serialization;
 namespace AIHappey.Responses;
 
 /// <summary>
-/// Minimal typed tool object: keep flexible until you want to type all variants.
-/// Example: { "type": "web_search" } or { "type":"function", "name": ..., "parameters": ... }
+/// Responses tool definition. Variant-specific and future properties are retained
+/// in <see cref="Extra"/>.
 /// </summary>
 public sealed class ResponseToolDefinition
 {

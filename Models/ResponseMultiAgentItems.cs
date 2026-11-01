@@ -10,6 +10,9 @@ public sealed class ResponseAgent
 {
     [JsonPropertyName("agent_name")]
     public string AgentName { get; set; } = default!;
+
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
 }
 
 /// <summary>
