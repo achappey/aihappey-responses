@@ -8,6 +8,7 @@ var tests = new (string Name, Action Run)[]
     ("request fields serialize and retain future properties", RequestRoundTrip),
     ("multimodal input and unknown item variants round-trip", InputRoundTrip),
     ("response, output, usage, and unknown fields round-trip", ResponseRoundTrip),
+    ("modern native output items retain typed tool correlation and payloads", ModernOutputItemsRoundTrip),
     ("response and stream errors retain standard and future fields", ErrorRoundTrip),
     ("tool definitions preserve variant-specific fields", ToolRoundTrip),
     ("official stream events deserialize and preserve event-specific fields", StreamEvents),
@@ -107,7 +108,7 @@ static void InputRoundTrip()
 
     var items = JsonSerializer.Deserialize<List<ResponseInputItem>>(json, ResponseJson.Default)!;
     Check(items[0] is ResponseInputMessage, "message discriminator");
-    Check(items[1] is ResponseUnknownInputItem, "unknown input discriminator");
+    Check(items[1] is ResponseMcpCallItem, "MCP call discriminator");
     var roundTrip = JsonSerializer.SerializeToElement(items, ResponseJson.Default);
     Check(roundTrip[0].GetProperty("content")[0].GetProperty("prompt_cache_breakpoint")
         .GetProperty("type").GetString() == "default", "prompt cache breakpoint");
@@ -169,6 +170,9 @@ static void ResponseRoundTrip()
     Check(response.Id == "resp_123", "response id");
     Check(response.NormalizedUsage?.InputTokensDetails?.CacheWriteTokens == 1, "cache write usage");
     Check(response.NormalizedUsage?.OutputTokensDetails?.ReasoningTokens == 3, "reasoning usage");
+    Check(response.Output.First() is JsonElement, "existing raw response output behavior");
+    Check(response.OutputItems.First() is ResponseInputMessage, "typed response message output");
+    Check(response.OutputItems.ElementAt(1) is ResponseMcpCallItem, "typed MCP output item");
     Check(response.Output.GetAssistantOutputText() == "Hello.", "assistant output text");
 
     var roundTrip = JsonSerializer.SerializeToElement(response, ResponseJson.Default);
@@ -177,7 +181,74 @@ static void ResponseRoundTrip()
     Check(roundTrip.GetProperty("usage").GetProperty("future_usage_counter").GetInt32() == 5,
         "future usage field");
     Check(roundTrip.GetProperty("output")[1].GetProperty("server_label").GetString() == "docs",
-        "unknown output item");
+        "MCP output item");
+}
+
+static void ModernOutputItemsRoundTrip()
+{
+    const string json = """
+        {
+          "id": "resp_tools",
+          "object": "response",
+          "created_at": 1762000000,
+          "status": "completed",
+          "model": "gpt-6-astra",
+          "output": [
+            {
+              "type": "file_search_call",
+              "id": "fs_1",
+              "status": "completed",
+              "queries": ["recent API"],
+              "results": [{ "file_id": "file_1", "score": 0.9, "future_result_field": true }]
+            },
+            {
+              "type": "computer_call",
+              "id": "cu_1",
+              "call_id": "call_computer",
+              "action": { "type": "click", "x": 12, "y": 34 },
+              "pending_safety_checks": [{ "id": "check_1" }]
+            },
+            {
+              "type": "mcp_call",
+              "id": "mcp_1",
+              "server_label": "docs",
+              "name": "search",
+              "arguments": "{\"query\":\"responses\"}",
+              "output": { "matches": [1], "future_output_field": "retained" },
+              "status": "completed"
+            },
+            {
+              "type": "custom_tool_call",
+              "id": "custom_1",
+              "call_id": "call_custom",
+              "name": "lookup",
+              "input": "{\"id\":1}",
+              "async": false
+            },
+            { "type": "future_output_item", "payload": { "version": 2 } }
+          ]
+        }
+        """;
+
+    var response = JsonSerializer.Deserialize<ResponseResult>(json, ResponseJson.Default)!;
+    Check(response.OutputItems.ElementAt(0) is ResponseFileSearchCallItem, "typed file search output");
+    Check(response.OutputItems.ElementAt(1) is ResponseComputerCallItem computer
+        && computer.CallId == "call_computer", "computer call correlation");
+    Check(response.OutputItems.ElementAt(2) is ResponseMcpCallItem mcp
+        && mcp.Id == "mcp_1" && mcp.Name == "search", "MCP tool identifiers");
+    Check(response.OutputItems.ElementAt(3) is ResponseCustomToolCallItem custom
+        && custom.CallId == "call_custom" && custom.Async == false, "custom tool call identifiers");
+    Check(response.OutputItems.ElementAt(4) is ResponseUnknownInputItem, "forward-compatible output variant");
+
+    var roundTrip = JsonSerializer.SerializeToElement(response, ResponseJson.Default);
+    Check(roundTrip.GetProperty("output")[0].GetProperty("results")[0]
+        .GetProperty("future_result_field").GetBoolean(), "nested file search extension");
+    Check(roundTrip.GetProperty("output")[1].GetProperty("call_id").GetString() == "call_computer",
+        "computer call correlation round trip");
+    Check(roundTrip.GetProperty("output")[2].GetProperty("output")
+        .GetProperty("future_output_field").GetString() == "retained", "structured MCP output");
+    Check(roundTrip.GetProperty("output")[4].GetProperty("payload")
+        .GetProperty("version").GetInt32() == 2, "unknown output item extension");
 }
 
 static void ToolRoundTrip()
@@ -310,19 +381,53 @@ static void StreamEvents()
     var incompleteEvent = JsonSerializer.Deserialize<ResponseStreamPart>(incomplete, ResponseJson.Default)!;
     Check(incompleteEvent is ResponseIncompleteEvent, "incomplete event discriminator");
 
-    const string futureEvent = """
+    const string mcpEvent = """
         {
           "type": "response.mcp_call.completed",
           "response_id": "resp_789",
           "sequence_number": 9,
+          "item_id": "mcp_789",
           "server_label": "docs",
           "output": "done"
         }
         """;
-    var unknown = (ResponseUnknownEvent)JsonSerializer.Deserialize<ResponseStreamPart>(futureEvent, ResponseJson.Default)!;
-    var unknownRoundTrip = JsonSerializer.SerializeToElement(unknown, ResponseJson.Default);
-    Check(unknownRoundTrip.GetProperty("server_label").GetString() == "docs", "unknown stream event field");
-    Check(unknownRoundTrip.GetProperty("response_id").GetString() == "resp_789", "unknown event response_id");
+    var mcpCall = (ResponseMcpCallCompleted)JsonSerializer.Deserialize<ResponseStreamPart>(
+        mcpEvent, ResponseJson.Default)!;
+    Check(mcpCall.ItemId == "mcp_789", "MCP event item correlation");
+    var mcpRoundTrip = JsonSerializer.SerializeToElement(mcpCall, ResponseJson.Default);
+    Check(mcpRoundTrip.GetProperty("server_label").GetString() == "docs", "MCP stream event extension");
+    Check(mcpRoundTrip.GetProperty("response_id").GetString() == "resp_789", "MCP event response_id");
+
+    const string shellOutputDelta = """
+        {
+          "type": "response.shell_call_output_content.delta",
+          "item_id": "shell_1",
+          "output_index": 0,
+          "command_index": 1,
+          "sequence_number": 10,
+          "delta": { "stdout": "partial", "stderr": "" }
+        }
+        """;
+    var shellDelta = (ResponseShellCallOutputContentDelta)JsonSerializer.Deserialize<ResponseStreamPart>(
+        shellOutputDelta, ResponseJson.Default)!;
+    Check(shellDelta.ItemId == "shell_1" && shellDelta.CommandIndex == 1,
+        "shell output stream correlation");
+    Check(shellDelta.Delta?.GetProperty("stdout").GetString() == "partial",
+        "shell output delta fidelity");
+
+    const string futureEvent = """
+        {
+          "type": "response.future_event",
+          "response_id": "resp_future",
+          "sequence_number": 12,
+          "payload": { "revision": 4 }
+        }
+        """;
+    var future = JsonSerializer.Deserialize<ResponseStreamPart>(futureEvent, ResponseJson.Default)!;
+    Check(future is ResponseUnknownEvent, "unknown stream event fallback");
+    Check(JsonSerializer.SerializeToElement(future, ResponseJson.Default)
+        .GetProperty("payload").GetProperty("revision").GetInt32() == 4,
+        "unknown stream event round trip");
 }
 
 static void AllOfficialStreamDiscriminators()
@@ -395,6 +500,7 @@ static void AllOfficialStreamDiscriminators()
         var json = JsonSerializer.Serialize(new { type, sequence_number = 1 }, ResponseJson.Default);
         var part = JsonSerializer.Deserialize<ResponseStreamPart>(json, ResponseJson.Default);
         Check(part?.Type == type, $"stream discriminator {type}");
+        Check(part is not ResponseUnknownEvent, $"typed official stream discriminator {type}");
         Check(JsonSerializer.SerializeToElement(part, ResponseJson.Default).GetProperty("type").GetString() == type,
             $"stream discriminator round trip {type}");
     }
@@ -450,6 +556,7 @@ static void AllOfficialInputDiscriminators()
         var json = JsonSerializer.Serialize(fixture, ResponseJson.Default);
         var item = JsonSerializer.Deserialize<ResponseInputItem>(json, ResponseJson.Default);
         Check(item?.Type == type, $"input item discriminator {type}");
+        Check(item is not ResponseUnknownInputItem, $"typed official input item discriminator {type}");
         Check(JsonSerializer.SerializeToElement(item, ResponseJson.Default).GetProperty("type").GetString() == type,
             $"input item discriminator round trip {type}");
     }
@@ -473,6 +580,41 @@ static void KnownItemExtensions()
     var roundTrip = JsonSerializer.SerializeToElement(item, ResponseJson.Default);
     Check(roundTrip.GetProperty("new_api_field").GetProperty("nested").GetBoolean(),
         "known input item extension");
+
+    const string reasoningJson = """
+        {
+          "type": "reasoning",
+          "id": "rs_123",
+          "content": [{ "type": "reasoning_text", "text": "opaque reasoning payload" }],
+          "status": "completed",
+          "encrypted_content": "encrypted",
+          "summary": [],
+          "future_reasoning_field": true
+        }
+        """;
+    var reasoning = JsonSerializer.Deserialize<ResponseInputItem>(reasoningJson, ResponseJson.Default)!;
+    var reasoningRoundTrip = JsonSerializer.SerializeToElement(reasoning, ResponseJson.Default);
+    Check(reasoning is ResponseReasoningItem { Status: "completed" }, "reasoning status");
+    Check(reasoningRoundTrip.GetProperty("content")[0].GetProperty("text").GetString() ==
+        "opaque reasoning payload", "reasoning content");
+    Check(reasoningRoundTrip.GetProperty("future_reasoning_field").GetBoolean(),
+        "reasoning extension");
+
+    const string compactionJson = """
+        {
+          "type": "compaction",
+          "id": "compact_1",
+          "encrypted_content": "opaque",
+          "created_by": "resp_1",
+          "future_compaction_field": 3
+        }
+        """;
+    var compaction = JsonSerializer.Deserialize<ResponseInputItem>(compactionJson, ResponseJson.Default)!;
+    var compactionRoundTrip = JsonSerializer.SerializeToElement(compaction, ResponseJson.Default);
+    Check(compactionRoundTrip.GetProperty("created_by").GetString() == "resp_1",
+        "compaction creator");
+    Check(compactionRoundTrip.GetProperty("future_compaction_field").GetInt32() == 3,
+        "compaction extension");
 
     const string functionOutput = """
         {
@@ -547,6 +689,7 @@ static void UnknownShellVariants()
             {
               "stdout": "ok",
               "stderr": "",
+              "future_chunk_field": true,
               "outcome": { "type": "signal", "signal": "SIGTERM" }
             }
           ]
@@ -558,6 +701,8 @@ static void UnknownShellVariants()
         "signal", "unknown shell outcome type");
     Check(outputJson.GetProperty("output")[0].GetProperty("outcome").GetProperty("signal").GetString() ==
         "SIGTERM", "unknown shell outcome field");
+    Check(outputJson.GetProperty("output")[0].GetProperty("future_chunk_field").GetBoolean(),
+        "unknown shell output chunk field");
 }
 
 static void Check(bool condition, string name)

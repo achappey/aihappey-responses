@@ -53,6 +53,9 @@ public class ResponseResult
     [JsonPropertyName("output")]
     public IEnumerable<object> Output { get; set; } = [];
 
+    [JsonIgnore]
+    public IEnumerable<ResponseInputItem> OutputItems => Output.Select(ToResponseInputItem);
+
     [JsonPropertyName("usage")]
     /// <summary>
     /// Usage remains object-typed for source compatibility. Responses mappers
@@ -135,6 +138,22 @@ public class ResponseResult
 
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
+
+    private static ResponseInputItem ToResponseInputItem(object? item)
+    {
+        if (item is ResponseInputItem responseItem)
+            return responseItem;
+
+        var element = item switch
+        {
+            JsonElement jsonElement => jsonElement,
+            null => throw new JsonException("Response output item cannot be null."),
+            _ => JsonSerializer.SerializeToElement(item, item.GetType(), ResponseJson.Default)
+        };
+
+        return element.Deserialize<ResponseInputItem>(ResponseJson.Default)
+            ?? throw new JsonException("Could not deserialize response output item.");
+    }
 
 }
 

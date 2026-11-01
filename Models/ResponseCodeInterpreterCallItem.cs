@@ -25,7 +25,7 @@ public sealed class ResponseCodeInterpreterCallItem : ResponseInputItem
     public string ContainerId { get; set; } = default!;
 
     [JsonPropertyName("outputs")]
-    public JsonElement Outputs { get; set; }
+    public JsonElement? Outputs { get; set; }
 
     [JsonPropertyName("status")]
     public string Status { get; set; } = "completed";
