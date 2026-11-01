@@ -8,6 +8,7 @@ var tests = new (string Name, Action Run)[]
     ("request fields serialize and retain future properties", RequestRoundTrip),
     ("multimodal input and unknown item variants round-trip", InputRoundTrip),
     ("response, output, usage, and unknown fields round-trip", ResponseRoundTrip),
+    ("response and stream errors retain standard and future fields", ErrorRoundTrip),
     ("tool definitions preserve variant-specific fields", ToolRoundTrip),
     ("official stream events deserialize and preserve event-specific fields", StreamEvents),
     ("all current official stream discriminators are accepted", AllOfficialStreamDiscriminators),
@@ -228,6 +229,49 @@ static void ToolRoundTrip()
     }
 
     Check(types.Length == 16, "official tool definition fixture count");
+}
+
+static void ErrorRoundTrip()
+{
+    const string responseJson = """
+        {
+          "id": "resp_failed",
+          "object": "response",
+          "created_at": 1740855869,
+          "status": "failed",
+          "model": "gpt-6-astra",
+          "output": [],
+          "error": {
+            "code": "server_error",
+            "message": "The response failed.",
+            "type": "server_error",
+            "param": "input",
+            "future_error_field": { "retryable": true }
+          }
+        }
+        """;
+    var response = JsonSerializer.Deserialize<ResponseResult>(responseJson, ResponseJson.Default)!;
+    Check(response.Error?.Type == "server_error" && response.Error.Param == "input",
+        "standard response error fields");
+    var responseRoundTrip = JsonSerializer.SerializeToElement(response, ResponseJson.Default);
+    Check(responseRoundTrip.GetProperty("error").GetProperty("future_error_field")
+        .GetProperty("retryable").GetBoolean(), "future response error field");
+
+    const string streamJson = """
+        {
+          "type": "error",
+          "sequence_number": 5,
+          "code": null,
+          "message": "The request could not be completed.",
+          "param": null,
+          "future_error_field": "preserved"
+        }
+        """;
+    var streamError = (ResponseError)JsonSerializer.Deserialize<ResponseStreamPart>(
+        streamJson, ResponseJson.Default)!;
+    Check(streamError.Code is null && streamError.Param is null, "nullable stream error fields");
+    Check(JsonSerializer.SerializeToElement(streamError, ResponseJson.Default)
+        .GetProperty("future_error_field").GetString() == "preserved", "future stream error field");
 }
 
 static void StreamEvents()

@@ -11,13 +11,12 @@ public class ResponseError : ResponseStreamPart
     public string Message { get; init; } = default!;
 
     [JsonPropertyName("param")]
-    public string Param { get; init; } = default!;
+    public string? Param { get; init; }
 
     [JsonPropertyName("code")]
-    public string Code { get; init; } = default!;
+    public string? Code { get; init; }
 
     [JsonPropertyName("type")]
     public override string Type { get; init; } = "error";
 
 }
-
