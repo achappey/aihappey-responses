@@ -4,6 +4,7 @@ using AIHappey.Responses.Streaming;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("native Apply Patch requests, operations, outputs, streaming and replay", ApplyPatchCompatibilityTests.Run),
     ("request fields serialize and retain future properties", RequestRoundTrip),
     ("multimodal input and unknown item variants round-trip", InputRoundTrip),
     ("response, output, usage, and unknown fields round-trip", ResponseRoundTrip),

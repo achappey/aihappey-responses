@@ -90,6 +90,18 @@ public sealed class ResponseInputItemJsonConverter : JsonConverter<ResponseInput
                    ?? throw new JsonException("Could not deserialize code_interpreter_call.");
         }
 
+        if (string.Equals(type, "apply_patch_call", StringComparison.OrdinalIgnoreCase))
+        {
+            return root.Deserialize<ResponseApplyPatchCallItem>(options)
+                   ?? throw new JsonException("Could not deserialize apply_patch_call.");
+        }
+
+        if (string.Equals(type, "apply_patch_call_output", StringComparison.OrdinalIgnoreCase))
+        {
+            return root.Deserialize<ResponseApplyPatchCallOutputItem>(options)
+                   ?? throw new JsonException("Could not deserialize apply_patch_call_output.");
+        }
+
         if (string.Equals(type, "shell_call", StringComparison.OrdinalIgnoreCase))
         {
             return root.Deserialize<ResponseShellCallItem>(options)
@@ -191,6 +203,14 @@ public sealed class ResponseInputItemJsonConverter : JsonConverter<ResponseInput
 
             case ResponseCodeInterpreterCallItem codeInterpreterCall:
                 JsonSerializer.Serialize(writer, codeInterpreterCall, options);
+                return;
+
+            case ResponseApplyPatchCallItem patchCall:
+                JsonSerializer.Serialize(writer, patchCall, options);
+                return;
+
+            case ResponseApplyPatchCallOutputItem patchOutput:
+                JsonSerializer.Serialize(writer, patchOutput, options);
                 return;
 
             case ResponseShellCallItem shellCall:

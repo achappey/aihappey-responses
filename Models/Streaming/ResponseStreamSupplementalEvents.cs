@@ -45,6 +45,12 @@ public class ResponseStreamItem
     [JsonPropertyName("max_output_length")]
     public int? MaxOutputLength { get; init; }
 
+    // Apply Patch uses the official output_item.added / output_item.done events.
+    // Only a completed item contains an operation ready for client execution.
+    [JsonPropertyName("operation")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public ResponseApplyPatchOperation? Operation { get; init; }
+
     [JsonPropertyName("content")]
     //public IReadOnlyList<ResponseStreamContentPart>? Content { get; init; }
     public JsonElement? Content { get; init; }

@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <Compile Include="Program.cs" />
+    <Compile Include="ApplyPatchCompatibilityTests.cs" />
     <Compile Include="../../Models/**/*.cs" Link="Models/%(RecursiveDir)%(Filename)%(Extension)" />
     <Compile Include="../../Extensions/**/*.cs" Link="Extensions/%(RecursiveDir)%(Filename)%(Extension)" />
     <Compile Include="../../Diagnostics/**/*.cs" Link="Diagnostics/%(RecursiveDir)%(Filename)%(Extension)" />
