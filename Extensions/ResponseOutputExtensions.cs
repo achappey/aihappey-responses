@@ -1,4 +1,5 @@
 using System.Text.Json;
+using AIHappey.Responses.Output;
 
 namespace AIHappey.Responses;
 
@@ -23,6 +24,14 @@ public static class ResponseOutputExtensions
     {
         if (item is null)
             yield break;
+
+        if (item is ResponseOutputMessage message)
+        {
+            if (message.Role == ResponseRole.Assistant)
+                foreach (var text in message.Content.OfType<ResponseOutputText>())
+                    yield return text.Text;
+            yield break;
+        }
 
         if (item is JsonElement element)
         {

@@ -22,7 +22,9 @@ var tests = new (string Name, Action Run)[]
     ("known variants preserve future fields at every discriminated level", OutputTests.KnownExtensions),
     ("optional, nullable and required properties", OutputTests.OptionalAndRequired),
     ("programmatic construction and concrete serialization", OutputTests.Construction),
-    ("existing serializer settings and contracts remain isolated", OutputTests.Isolation)
+    ("existing serializer settings and contracts remain isolated", OutputTests.Isolation),
+    ("canonical outputs cross result, replay and streaming boundaries", OutputTests.TransportBoundaries),
+    ("constructed files and tool payloads remain lossless", OutputTests.PayloadConversions)
 };
 
 foreach (var (name, run) in tests)
@@ -418,6 +420,55 @@ internal static class OutputTests
         var outputProperty = typeof(ResponseResult).GetProperty("Output")!;
         Check(outputProperty.PropertyType == typeof(IEnumerable<object>), "existing generic output property unchanged");
         Check(JsonSerializer.SerializeToNode(response, ResponseJson.Default)!["output"]![0]!["type"]!.GetValue<string>() == "message", "old response serialization");
+    }
+
+    public static void TransportBoundaries()
+    {
+        var result = new ResponseResult
+        {
+            Id = "resp_1", Model = "test",
+            Output = [new ResponseOutputMessage
+            {
+                Id = "msg_1", Role = ResponseRole.Assistant, Status = "completed",
+                Content = [new ResponseOutputText { Text = "Answer", Annotations = [] }]
+            }, new ResponseOutputItem<ResponseFunctionCallItem>(new()
+            {
+                Id = "fc_1", CallId = "call_1", Name = "lookup", Status = "completed", Arguments = "{}"
+            })]
+        };
+        foreach (var options in Settings)
+        {
+            var json = JsonSerializer.SerializeToElement(result, options);
+            foreach (var value in json.GetProperty("output").EnumerateArray())
+                Check(value.Deserialize<ResponseOutputItem>(options) is not null, "object-typed result output remains canonical");
+        }
+        Check(result.Output.GetAssistantOutputText() == "Answer", "typed text extraction");
+        Check(result.OutputItems.First() is ResponseInputMessage, "canonical message can be replayed");
+        Check(result.OutputItems.Last() is ResponseFunctionCallItem, "reused call can be replayed");
+        var item = (ResponseOutputItem)result.Output.First();
+        var stream = item.ToStreamItem();
+        Check(stream.Id == "msg_1" && stream.Content!.Value[0].GetProperty("annotations").GetArrayLength() == 0, "stream projection includes required fields");
+    }
+
+    public static void PayloadConversions()
+    {
+        var file = new InputFilePart
+        {
+            FileUrl = "https://files.test/report?sig=a%2Fb", Filename = "report.pdf",
+            AdditionalProperties = new() { ["x_file"] = JsonSerializer.SerializeToElement(new[] { 1, 2 }) }
+        }.ToOutputContent();
+        Check(file is ResponseUnknownOutputContent { Type: "input_file" }, "provider file content uses existing unknown union member");
+        var json = JsonSerializer.SerializeToElement<ResponseOutputContent>(file, ResponseJson.Default);
+        Check(json.GetProperty("file_url").GetString() == "https://files.test/report?sig=a%2Fb", "file URL unchanged");
+        Check(json.GetProperty("x_file").GetArrayLength() == 2, "file extensions preserved");
+        var content = ResponseOutputConversions.ToToolOutput(JsonSerializer.Deserialize<JsonElement>("""[{"type":"input_file","file_id":"file_1"},{"type":"input_text","text":"Report"}]"""));
+        Check(content.Parts![0] is InputFilePart { FileId: "file_1" }, "multimodal result remains structured");
+        Check(ResponseOutputConversions.ToToolOutput("plain result").Text == "plain result", "plain text is not double encoded");
+        var arbitrary = JsonSerializer.Deserialize<JsonElement>("""[{"type":"business_record","id":7}]""");
+        Check(ResponseOutputConversions.ToToolOutput(arbitrary).Text == arbitrary.GetRawText(), "ordinary JSON arrays stay tool data");
+        var future = JsonSerializer.Deserialize<ResponseOutputAnnotation>("""{"type":"future_citation","x":true}""")!;
+        var text = (ResponseOutputText)new OutputTextPart("text") { Annotations = [future] }.ToOutputContent();
+        Check(ReferenceEquals(text.Annotations[0], future), "already typed annotations are not reserialized");
     }
 
     private static T Read<T>(string json) where T : ResponseOutputItem
