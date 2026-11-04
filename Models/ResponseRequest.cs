@@ -69,8 +69,7 @@ public sealed class ResponseRequest
     public List<string>? Include { get; set; }
 
     /// <summary>
-    /// Docs say: "map of up to 16 keys; values are string/boolean/number".
-    /// Keep as object? for max flexibility.
+    /// Application metadata attached to the response. This is not a provider-options bag.
     /// </summary>
     [JsonPropertyName("metadata")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -78,6 +77,9 @@ public sealed class ResponseRequest
 
     [JsonIgnore]
     public Dictionary<string, string>? Headers { get; set; }
+
+    [JsonIgnore]
+    public Dictionary<string, object?>? ExecutionMetadata { get; set; }
 
     /// <summary>
     /// Tools are a big tree. Keep as flexible objects for now.

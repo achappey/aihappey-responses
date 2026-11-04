@@ -316,19 +316,6 @@ public static class HttpExtensions
         return body;
     }  
 
-    public static JsonElement? GetProviderOptions(
-        this Dictionary<string, object?>? metadata,
-        string? providerId)
-    {
-        if (metadata is null || string.IsNullOrWhiteSpace(providerId))
-            return null;
-
-        if (!metadata.TryGetValue(providerId, out var obj))
-            return null;
-
-        return obj is JsonElement json ? json : null;
-    }
-
     private static JsonElement BuildPayload(
         ResponseRequest options,
         string? providerId,
@@ -339,31 +326,10 @@ public static class HttpExtensions
         if (node is not JsonObject body)
             throw new InvalidOperationException("ResponseRequest did not serialize to a JSON object.");
 
-        // Internal-only stuff should never go to provider.
-        body.Remove("metadata");
-        body.Remove("providerMetadata");
-
         // Optional root extras first.
         if (extraRootProperties is { ValueKind: JsonValueKind.Object })
         {
             ApplyJsonObjectPatch(body, extraRootProperties.Value);
-        }
-
-        // Provider metadata last, so it wins.
-        var providerOptions = options.Metadata.GetProviderOptions(providerId);
-
-        if (providerOptions is { ValueKind: JsonValueKind.Object })
-        {
-            ApplyJsonObjectPatch(
-                body,
-                providerOptions.Value,
-                excluded:
-                 [
-                     "headers",
-                     "tools",
-                     "providerMetadata",
-                     "metadata"
-                 ]);
         }
 
         body["store"] = false;
